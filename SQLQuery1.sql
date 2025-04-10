@@ -1,0 +1,9 @@
+﻿CREATE TABLE CallRecords (
+    RecordID INT PRIMARY KEY IDENTITY(1,1),
+    CallTime DATETIME2 NOT NULL,
+    WardNumber NVARCHAR(50) NOT NULL,
+    PatientName NVARCHAR(100) NOT NULL,
+    NurseName NVARCHAR(100) NOT NULL,
+    CallStatus NVARCHAR(50) NOT NULL,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE()
+);
