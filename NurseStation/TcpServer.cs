@@ -275,8 +275,6 @@ namespace WardCallSystemNurseStation
         {
             isRead = false;
             var wardNumber = (string)jsonObject["WardNumber"];
-            NurseClient nurseCpy = new NurseClient();
-            bool isSec = false;
             CallDispatcher.Instance.PlaceCall (new CallRequest
             {
                 WardNumber = wardNumber,
@@ -294,9 +292,16 @@ namespace WardCallSystemNurseStation
             while (!isReturn)
             {
                 CallDispatcher.Instance.isPaused = true;
+
+                //最多等待2秒
+                int maxWait = 20000;
+                int startWait = 0;
                 while (CallDispatcher.Instance.isPaused)
                 {
                     Thread.Sleep(100);
+                    startWait += 100;
+                    if (startWait >= maxWait)
+                        break;
                 }
                 try
                 {
@@ -312,12 +317,11 @@ namespace WardCallSystemNurseStation
                     {
                         return;
                     }
-
-                    if(listsendNurse.Contains(nurse.NurseCard))
+                    if(listsendNurse.Contains(nurse.NurseCard) || CallDispatcher.Instance.isBusy)
                     {
                         //CallDispatcher.Instance.HandleNurseResponse(nurse.NurseName, false,false);
-                        //var Wardclient = ListWardClient.Where(x => x.WardCard == (string)jsonObject["WardNumber"]).FirstOrDefault();
-                        //Wardclient.SendData("{\"DataMethod\":\"WardCall\",\"IsSuccess\":\"false\"}");
+                        var Wardclient = ListWardClient.Where(x => x.WardCard == (string)jsonObject["WardNumber"]).FirstOrDefault();
+                        Wardclient.SendData("{\"DataMethod\":\"WardCall\",\"IsSuccess\":\"false\"}");
                         return;
                     }
                    

@@ -270,6 +270,10 @@ namespace WardCallSystemNurseStation
                         query = new ObservableCollection<CallRecord>(
                             CallDispatcher.Instance.lstCallRecord.Where(r => r.Status == "已接听"));
                         break;
+                    case "忙碌中":
+                        query = new ObservableCollection<CallRecord>(
+                            CallDispatcher.Instance.lstCallRecord.Where(r => r.Status == "忙碌中"));
+                        break;
                     default:
                         query = CallDispatcher.Instance.lstCallRecord;
                         break;

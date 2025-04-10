@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace NurseStation.Properties
+namespace WardCallSystemNurseStation.Properties
 {
 
 

@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WardCallSystemNurseStation;
 
-namespace NurseStation
+namespace WardCallSystemNurseStation
 {
     public class ExcelExporter
     {

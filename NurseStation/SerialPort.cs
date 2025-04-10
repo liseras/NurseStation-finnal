@@ -16,7 +16,7 @@ using System.Windows.Threading;
 using System.IO;
 using WardCallSystemNurseStation;
 
-namespace NurseStation
+namespace WardCallSystemNurseStation
 {
     // SerialPortViewModel.cs
     

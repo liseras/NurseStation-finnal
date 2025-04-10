@@ -22,7 +22,7 @@ using System.Reflection;
 using System.IO.Ports;
 using System.Runtime.CompilerServices;
 
-namespace NurseStation
+namespace WardCallSystemNurseStation
 {
     /// <summary>
     /// SettingConfig.xaml 的交互逻辑

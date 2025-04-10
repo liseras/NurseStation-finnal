@@ -8,8 +8,9 @@ using System.Threading;
 using WardCallSystemNurseStation;
 using System.Collections.ObjectModel;
 using System.Windows;
+using DocumentFormat.OpenXml.Vml;
 
-namespace NurseStation
+namespace WardCallSystemNurseStation
 {
    
 
@@ -29,6 +30,7 @@ namespace NurseStation
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly object _lock = new object();
         public bool isPaused = false; // 是否WardCall方法等待分配完成
+        public bool isBusy = false;
 
         //点对点呼叫字典
         public ConcurrentDictionary<string, NurseClient> p2pDic = new ConcurrentDictionary<string, NurseClient>();
@@ -88,19 +90,27 @@ namespace NurseStation
                                 .Where(n => n.IsAvailable)
                                 .OrderBy(n => n.LastResponseTime)
                                 .FirstOrDefault();
-
-                            if (availableNurse != null)
+                        isBusy = false;
+                        if (availableNurse != null)
                             {
                                 AssignCall(call, availableNurse);
                             }
                             else
                             {
+                                isBusy = true;
+                                // 记录呼叫记录
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    lstCallRecord.Add(new CallRecord(call.CallTime, call.WardNumber, call.PatientName, "Null", "忙碌中"));
+                                });
+                                //添加呼叫记录到数据库
+                                CallRecordRepository.Instance.InsertCallRecord(new CallRecord(call.CallTime, call.WardNumber, call.PatientName, "Null", "忙碌中"));
+                           
                                 // 如果没有可用护士，重新入队
-                                _callQueue.Add(call);
-                            }
+                                //_callQueue.Add(call);
+                        }
                         }
                     isPaused = false; // 处理完成后，设置为可分配状态
-
                 }
             }
             catch (OperationCanceledException)
@@ -117,7 +127,7 @@ namespace NurseStation
             lock (_lock)
             {
                 // 标记护士为忙碌
-                //nurse.IsAvailable = false;
+                nurse.IsAvailable = false;
 
                 // 更新呼叫状态
                 call.Status = CallStatus.Processing;
@@ -125,10 +135,7 @@ namespace NurseStation
                 nurse.LastResponseTime = DateTime.Now;
                 //添加呼叫关系
                 bool ret =  p2pDic.TryAdd(call.WardNumber, nurse);
-                if(!ret)
-                {
-                    MessageBox.Show($"TryAdd {nurse.NurseName} failer");
-                }
+                
                 
             }
         }
@@ -174,13 +181,14 @@ namespace NurseStation
                             }
                             else
                             {
-                                nurse.IsAvailable = true;
+                                
                                 call.Status = CallStatus.Timeout;
                                 var availableNurse = _nurses.Values
                                     .Where(n => n.IsAvailable)
                                     .OrderBy(n => n.LastResponseTime)
                                     .FirstOrDefault();
                                 // 记录未接听的记录
+                                nurse.IsAvailable = true;
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
                                     lstCallRecord.Add(new CallRecord(call.CallTime, call.WardNumber, call.PatientName, nurseName, "未接听"));
