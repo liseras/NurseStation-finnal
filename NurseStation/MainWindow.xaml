@@ -3,7 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="病房无线呼叫系统 - 护士站端" Height="700" Width="1000"
         Icon="D:\VisualStudio_code\NurseStation\NurseStation\image\app.ico"
-        Background="#F0F8FF">
+        Background="#F0F8FF"
+        Closed="Window_Closed"
+        >
     <Grid >
         <StackPanel Margin="0,30">
             <Border Width="200" Height="50" BorderBrush="AliceBlue"  Background="LawnGreen" CornerRadius="20">

@@ -28,6 +28,7 @@ namespace NurseStation
         public  ConcurrentDictionary<string, NurseClient> _nurses = new ConcurrentDictionary<string, NurseClient>(); // 护士集合
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly object _lock = new object();
+        public bool isPaused = false; // 是否WardCall方法等待分配完成
 
         //点对点呼叫字典
         public ConcurrentDictionary<string, NurseClient> p2pDic = new ConcurrentDictionary<string, NurseClient>();
@@ -79,7 +80,7 @@ namespace NurseStation
             {
                 foreach (var call in _callQueue.GetConsumingEnumerable(_cancellationTokenSource.Token))
                 {
-                        if (call.Status == CallStatus.Waiting)
+                        if (call.Status == CallStatus.Waiting || call.Status == CallStatus.Timeout)
                         {
                             _callQueueCpy.Add(call);
                             // 查找可用护士（按最后响应时间排序）
@@ -98,12 +99,14 @@ namespace NurseStation
                                 _callQueue.Add(call);
                             }
                         }
-                    
+                    isPaused = false; // 处理完成后，设置为可分配状态
+
                 }
             }
             catch (OperationCanceledException)
             {
                 Console.WriteLine("调度器已停止");
+                isPaused = false; // 设置为可分配状态
             }
         }
 
@@ -131,7 +134,7 @@ namespace NurseStation
         }
 
         // 护士响应处理
-        public bool HandleNurseResponse(string nurseName, bool isSuccess)
+        public bool HandleNurseResponse(string nurseName, bool isSuccess, bool isEndueue = true)
         {
             lock (_lock)
             {
@@ -177,20 +180,22 @@ namespace NurseStation
                                     .Where(n => n.IsAvailable)
                                     .OrderBy(n => n.LastResponseTime)
                                     .FirstOrDefault();
-                                if (availableNurse == null)
+                                // 记录未接听的记录
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    lstCallRecord.Add(new CallRecord(call.CallTime, call.WardNumber, call.PatientName, nurseName, "未接听"));
+                                });
+                                // 记录到数据库
+                                CallRecordRepository.Instance.InsertCallRecord(new CallRecord(call.CallTime, call.WardNumber, call.PatientName, nurseName, "未接听"));
+                                if (availableNurse == null || !isEndueue)
                                 {
                                     IsResult = true;
-                                    
-                                    // 记录未接听的记录
-                                    Application.Current.Dispatcher.Invoke(() =>
-                                    {
-                                        lstCallRecord.Add(new CallRecord(call.CallTime, call.WardNumber, call.PatientName, nurseName, "未接听"));
-                                    });
-                                    // 记录到数据库
-                                    CallRecordRepository.Instance.InsertCallRecord(new CallRecord(call.CallTime, call.WardNumber, call.PatientName, nurseName, "未接听"));
                                 }
                                 else
+                                {
+                                    // 记录未接听的记录                          
                                     _callQueue.Add(call); // 重新入队
+                                }
 
                             }
                         }

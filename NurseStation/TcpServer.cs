@@ -290,9 +290,14 @@ namespace WardCallSystemNurseStation
            // SerialPortViewModel.Instense.SendData (cmd);
 
             isReturn = false;
+            List<string> listsendNurse = new List<string>();
             while (!isReturn)
             {
-                Thread.Sleep(1000);
+                CallDispatcher.Instance.isPaused = true;
+                while (CallDispatcher.Instance.isPaused)
+                {
+                    Thread.Sleep(100);
+                }
                 try
                 {
                     // 添加ward到json
@@ -308,21 +313,17 @@ namespace WardCallSystemNurseStation
                         return;
                     }
 
-                    if (!isSec)
-                        nurseCpy = nurse;
-                    else
+                    if(listsendNurse.Contains(nurse.NurseCard))
                     {
-                        if (nurseCpy == nurse)
-                        {
-                            CallDispatcher.Instance.HandleNurseResponse(nurse.NurseName, false);
-                            var Wardclient = ListWardClient.Where(x => x.WardCard == (string)jsonObject["WardNumber"]).FirstOrDefault();
-                            Wardclient.SendData("{\"DataMethod\":\"WardCall\",\"IsSuccess\":\"false\"}");
-                            return;
-                        }
+                        //CallDispatcher.Instance.HandleNurseResponse(nurse.NurseName, false,false);
+                        //var Wardclient = ListWardClient.Where(x => x.WardCard == (string)jsonObject["WardNumber"]).FirstOrDefault();
+                        //Wardclient.SendData("{\"DataMethod\":\"WardCall\",\"IsSuccess\":\"false\"}");
+                        return;
                     }
-                  
+                   
                     nurse.SendData(buffer);
-
+                    //添加到拨打过的列表
+                    listsendNurse.Add(nurse.NurseCard);
                     var message = nurse.RecvData();
                  
                     var response = message.TrimEnd('\0');

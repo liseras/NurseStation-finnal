@@ -16,6 +16,7 @@ using NurseStation;
 using DocumentFormat.OpenXml.Wordprocessing;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
+using System.Diagnostics;
 namespace WardCallSystemNurseStation
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
@@ -86,7 +87,7 @@ namespace WardCallSystemNurseStation
             InitBinding();
             ReCord.SelectedIndex = 0;
             settingConfig = new SettingConfig();
-           
+
             TcpServer.Instance.StartAsync();
             txtBlock.Text = $"服务器已开启     IP:{GetIPAddress()}       Port:{TcpServer.Instance._port} \n";
             TcpServer.Instance.DataRecviced += (msg) => UpdateTextBlock(msg);
@@ -101,7 +102,7 @@ namespace WardCallSystemNurseStation
             lstNurse.ItemsSource = TcpServer.Instance.ListNurseClient;
             lstWard.ItemsSource = TcpServer.Instance.ListWardClient;
             CallRecordListView.ItemsSource = CallDispatcher.Instance.lstCallRecord;
-           
+
             CallRecordRepository.Instance.GetAllCallRecords(CallDispatcher.Instance.lstCallRecord);
         }
 
@@ -230,7 +231,12 @@ namespace WardCallSystemNurseStation
             return "";
         }
 
-       
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            Process currentProcess = Process.GetCurrentProcess();
+            currentProcess.Kill();
+
+        }
 
         private void ExportExcel_Click(object sender, RoutedEventArgs e)
         {
@@ -275,12 +281,12 @@ namespace WardCallSystemNurseStation
                 {
                     FilteredRecords.Add(record);
                 }
-                if(CallRecordListView != null)
+                if (CallRecordListView != null)
                     CallRecordListView.ItemsSource = FilteredRecords;
             }
             catch (Exception ex)
             {
-                
+
             }
         }
 
@@ -290,9 +296,10 @@ namespace WardCallSystemNurseStation
 
             settingConfig.ShowDialog();
 
-            
+
         }
     }
+       
     /// <summary>
     /// ward
     /// </summary>
