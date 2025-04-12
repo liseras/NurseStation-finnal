@@ -72,6 +72,7 @@ namespace WardCallSystemNurseStation
                 {
                     serialPort.Open();
                     serialPort.WriteLine(data);
+                    serialPort.Close();
                 }
                 catch (Exception ex)
                 {
