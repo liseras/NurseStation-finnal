@@ -283,7 +283,7 @@ namespace WardCallSystemNurseStation
                 Status = CallStatus.Waiting,
                 Priority = 1,
             });
-
+            var Wardclient = ListWardClient.Where(x => x.WardCard == (string)jsonObject["WardNumber"]).FirstOrDefault();
             string cmd = (string)jsonObject["WardNumber"] + "|" + "true";
            // SerialPortViewModel.Instense.SendData (cmd);
 
@@ -320,15 +320,41 @@ namespace WardCallSystemNurseStation
                     if(listsendNurse.Contains(nurse.NurseCard) || CallDispatcher.Instance.isBusy)
                     {
                         //CallDispatcher.Instance.HandleNurseResponse(nurse.NurseName, false,false);
-                        var Wardclient = ListWardClient.Where(x => x.WardCard == (string)jsonObject["WardNumber"]).FirstOrDefault();
+                      
                         Wardclient.SendData("{\"DataMethod\":\"WardCall\",\"IsSuccess\":\"false\"}");
                         return;
                     }
-                   
+
+
+                    if (Wardclient.isCancel)
+                    {
+                        return;
+                    }
+
+                    //发送呼叫请求
                     nurse.SendData(buffer);
                     //添加到拨打过的列表
                     listsendNurse.Add(nurse.NurseCard);
-                    var message = nurse.RecvData();
+                    bool isBreak = false;
+                    string message = string.Empty;
+                    while (!isBreak)
+                    {
+                        Task.Run(() => {  
+                            message = nurse.RecvData(); 
+                            isBreak = true;
+                        });
+                        Thread.Sleep(100);
+                        //如果已经拨打过去则发送取消信息给护士端
+                        if (Wardclient.isCancel)
+                        {
+                            nurse.SendData("{\"DataMethod\":\"CancelCall\"}");
+                            return;
+                        }
+                    }
+
+                  
+                    
+                    
                  
                     var response = message.TrimEnd('\0');
 
@@ -345,8 +371,12 @@ namespace WardCallSystemNurseStation
                         if (isRusult)
                         {
                             var ward1 = ListWardClient.FirstOrDefault(x => x.WardCard == (string)responseJson["WardNumber"]);
-                            ward1.SendData(response);
+                            //ward1.SendData(response);
+                            string NurseIP = ListNurseClient.FirstOrDefault(x=>x.NurseName == (string)responseJson["NurseName"]).NurseIP;
+                            ward1.SendData((string)responseJson["NurseName"]+"|" + (string)responseJson["WardNumber"] + 
+                                "|" + NurseIP + "|" + responseJson["Port"].ToString());
                              cmd = (string)jsonObject["WardNumber"] + "|" + "false";
+                            DataRecviced?.Invoke("ward1.SendData" + response);
                             // SerialPortViewModel.Instense.SendData(cmd);
                             break;
                         }

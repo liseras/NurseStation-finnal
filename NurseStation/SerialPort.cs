@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using System.IO;
 using WardCallSystemNurseStation;
+using System.Windows;
 
 namespace WardCallSystemNurseStation
 {
@@ -24,30 +25,40 @@ namespace WardCallSystemNurseStation
     public class SerialPortViewModel 
     {
         #region 单例模式
-        private static SerialPortViewModel _instense;
-        private static object _lock = new object();
-        public static SerialPortViewModel Instense
+        private static SerialPortViewModel _instance;
+
+        // 静态锁对象，用于线程同步
+        private static readonly object _lock = new object();
+
+        // 私有构造函数，防止外部实例化
+        private SerialPortViewModel()
+        {
+            // 初始化逻辑（如果需要）
+        }
+
+        // 公共静态属性，提供线程安全的单例访问
+        public static SerialPortViewModel Instance
         {
             get
             {
-                return _instense;
-            }
-            set
-            {
-                lock (_lock)
+                if (_instance == null) // 双重检查锁定
                 {
-                    if (_instense == null)
+                    lock (_lock)
                     {
-                        _instense = new SerialPortViewModel();
+                        if (_instance == null)
+                        {
+                            _instance = new SerialPortViewModel();
+                        }
                     }
                 }
+                return _instance;
             }
         }
 
         #endregion
-        
-        private static string portName =  "COM1";
-        private static int baudRate = 9600;
+
+        private static string portName = "COM3";
+        private static int baudRate = 115200;
         public static void SendData(string portName, int baudRate, string data)
         {
             using (var serialPort = new SerialPort(portName, baudRate))  //Parity.None,8,StopBits.One,Handshake.None,SerialPort.InfiniteTimeout
@@ -64,20 +75,44 @@ namespace WardCallSystemNurseStation
                 }
             }
         }
-        public  void SendData(string data)
+        private static readonly object Lock = new object();
+        public void SendData(string data)
         {
-            using (var serialPort = new SerialPort(portName, baudRate))
+            lock (Lock)
             {
-                try
+                using (var serialPort = new SerialPort(portName, baudRate))
                 {
-                    serialPort.Open();
-                    serialPort.WriteLine(data);
-                    serialPort.Close();
-                }
-                catch (Exception ex)
-                {
-                    // 根据需要处理异常
-                    throw new IOException($"发送失败: {ex.Message}", ex);
+
+                    try
+                    {
+                        serialPort.Open();
+                        serialPort.WriteLine(data);
+                        serialPort.ReadTimeout = 1000;
+                        string res = serialPort.ReadLine();
+                        Application.Current.Dispatcher
+                            .Invoke(() =>
+                            {
+                                TcpServer.Instance.DataRecviced.Invoke(res);
+                            });
+                        serialPort.Close();
+                    }
+                    catch (TimeoutException)
+                    {
+                        // 处理超时异常
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            TcpServer.Instance.DataRecviced.Invoke("串口读取超时");
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        // 根据需要处理异常
+                        Application.Current.Dispatcher
+                             .Invoke(() =>
+                             {
+                                 TcpServer.Instance.DataRecviced.Invoke("串口访问失败");
+                             });
+                    }
                 }
             }
         }

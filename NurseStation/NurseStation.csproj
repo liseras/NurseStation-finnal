@@ -161,7 +161,6 @@
     <Compile Include="CallRecordRepository.cs" />
     <Compile Include="ExcelExporter.cs" />
     <Compile Include="Loger.cs" />
-    <Compile Include="NurseMessageListener.cs" />
     <Compile Include="SerialPort.cs" />
     <Compile Include="SettingConfig.xaml.cs">
       <DependentUpon>SettingConfig.xaml</DependentUpon>

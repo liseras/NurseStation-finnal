@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using MySql.Data.MySqlClient;
 using WardCallSystemNurseStation;
 
 namespace WardCallSystemNurseStation
@@ -25,7 +26,7 @@ namespace WardCallSystemNurseStation
                     {
                         if (_instance == null)
                         {
-                            _instance = new CallRecordRepository(@"Server=(localdb)\MSSQLLocalDB;Database=MySqlBace;Integrated Security=True;MultipleActiveResultSets=True;");
+                            _instance = new CallRecordRepository();
                         }
                     }
                 }
@@ -34,12 +35,116 @@ namespace WardCallSystemNurseStation
         }
 
         #endregion
-        private readonly string _connectionString;
+        //private string _connectionString = @"Server=(localdb)\MSSQLLocalDB;Database=MySqlBace;Integrated Security=True;MultipleActiveResultSets=True;";
+        private string _connectionString = @"Server=(localdb)\MSSQLLocalDB;Integrated Security=True;MultipleActiveResultSets=True;";
 
-        public CallRecordRepository(string connectionString)
+        private string databaseName = "MySqlBace";
+        private static string createTableCallRecords = @"
+        CREATE TABLE dbo.CallRecords (
+            RecordID INT PRIMARY KEY IDENTITY(1,1), -- 主键，自增
+            WardNumber NVARCHAR(50) NOT NULL,       -- 病房编号，不允许为空
+            PatientName NVARCHAR(100) NOT NULL,     -- 患者姓名，不允许为空
+            NurseName NVARCHAR(100) NOT NULL,       -- 护士姓名，不允许为空
+            CallStatus NVARCHAR(50) NOT NULL,       -- 呼叫状态，不允许为空
+            CreatedAt DATETIME2(7) NOT NULL DEFAULT SYSDATETIME(), -- 创建时间，默认为当前时间，不允许为空
+            CallTime DATETIME NOT NULL              -- 呼叫时间，不允许为空
+        );
+        ";
+
+        private static string createTablePatients = @"
+        CREATE TABLE dbo.Patients (
+            PatientId INT PRIMARY KEY IDENTITY(1,1), -- 主键，自增
+            WardNumber NVARCHAR(50) NOT NULL,        -- 病房编号，不允许为空
+            PatientGender NVARCHAR(50) NOT NULL,     -- 患者性别，不允许为空
+            PatientName NVARCHAR(100) NOT NULL,      -- 患者姓名，不允许为空
+            PatientAge INT NOT NULL,                 -- 患者年龄，不允许为空
+            CreatedAt DATETIME NULL DEFAULT GETDATE(), -- 创建时间，默认为当前时间，允许为空
+            PatientCondition NVARCHAR(100) NULL      -- 患者病情描述，允许为空
+        );
+        ";
+
+
+        public CallRecordRepository()
         {
-            _connectionString = connectionString;
+
+            
         }
+
+        public void SqlServerInit()
+        {
+            try
+            {
+                CheckAndCreateDatabase(_connectionString, databaseName);
+                _connectionString += $"Database={databaseName};";
+                // 检查并创建表
+                CheckAndCreateTable(_connectionString, "dbo.CallRecords", createTableCallRecords);
+                CheckAndCreateTable(_connectionString, "dbo.Patients", createTablePatients);
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        /// <summary>
+        /// 检查并创建表
+        /// </summary>
+        static void CheckAndCreateTable(string connectionString, string tableName, string createTableQuery)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                // 查询表是否存在
+                string query = $@"
+                IF NOT EXISTS (
+                    SELECT * 
+                    FROM sys.tables 
+                    WHERE name = N'{tableName}'
+                )
+                BEGIN
+                    {createTableQuery}
+                END
+            ";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+
+                
+            }
+        }
+
+        /// <summary>
+        /// 检查并创建数据库
+        /// </summary>
+        static void CheckAndCreateDatabase(string connectionString, string databaseName)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                // 查询数据库是否存在
+                string query = $@"
+                IF NOT EXISTS (
+                    SELECT name 
+                    FROM sys.databases 
+                    WHERE name = N'{databaseName}'
+                )
+                BEGIN
+                    CREATE DATABASE [{databaseName}];
+                END
+            ";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+
+              
+            }
+        }
+
 
         public void InsertCallRecord(CallRecord record)
         {
@@ -57,6 +162,8 @@ namespace WardCallSystemNurseStation
                 cmd.Parameters.AddWithValue("@PatientName", record.PatientName);
                 cmd.Parameters.AddWithValue("@NurseName", record.NurseName);
                 cmd.Parameters.AddWithValue("@CallStatus", record.Status);
+
+                
 
                 conn.Open();
                 cmd.ExecuteNonQuery();

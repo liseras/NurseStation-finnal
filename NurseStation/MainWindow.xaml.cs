@@ -83,6 +83,7 @@ namespace WardCallSystemNurseStation
         {
             InitializeComponent();
             DataContext = this; // 设置当前窗口为数据上下文
+            CallRecordRepository.Instance.SqlServerInit();
             WardInfo.Instance.SqlQuarry();
             InitBinding();
             ReCord.SelectedIndex = 0;
@@ -317,6 +318,7 @@ namespace WardCallSystemNurseStation
         public event EventHandler Disconnected;
         private NetworkStream _stream;
         private bool _isDisposed = false;
+        public bool isCancel {  get; set; } = false;
         public WardClient(string name, string ip, string card, bool status,TcpClient client)
         {
             WardName = name;
