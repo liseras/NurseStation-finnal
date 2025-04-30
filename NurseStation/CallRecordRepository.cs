@@ -62,7 +62,20 @@ namespace WardCallSystemNurseStation
             PatientCondition NVARCHAR(100) NULL      -- 患者病情描述，允许为空
         );
         ";
-
+        private static string createTableUsers = @"
+            CREATE TABLE dbo.Users (
+                Id INT IDENTITY(1,1) PRIMARY KEY,
+                Username NVARCHAR(50) NOT NULL UNIQUE,
+                Password NVARCHAR(255) NOT NULL
+        );
+        ";
+        /*
+         * CREATE TABLE Users (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Username NVARCHAR(50) NOT NULL UNIQUE,
+    Password NVARCHAR(255) NOT NULL
+);
+          */
 
         public CallRecordRepository()
         {
@@ -79,9 +92,11 @@ namespace WardCallSystemNurseStation
                 // 检查并创建表
                 CheckAndCreateTable(_connectionString, "dbo.CallRecords", createTableCallRecords);
                 CheckAndCreateTable(_connectionString, "dbo.Patients", createTablePatients);
+                CheckAndCreateTable(_connectionString, "dbo.Users", createTableUsers);
             }
             catch (Exception ex)
             {
+                
             }
         }
 

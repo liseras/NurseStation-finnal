@@ -158,14 +158,17 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="CallDispatcher.cs" />
+    <Compile Include="CallRecord.cs" />
     <Compile Include="CallRecordRepository.cs" />
     <Compile Include="ExcelExporter.cs" />
     <Compile Include="Loger.cs" />
+    <Compile Include="NurseClient.cs" />
     <Compile Include="SerialPort.cs" />
     <Compile Include="SettingConfig.xaml.cs">
       <DependentUpon>SettingConfig.xaml</DependentUpon>
     </Compile>
     <Compile Include="TcpServer.cs" />
+    <Compile Include="WardClient.cs" />
     <Compile Include="WardInfo.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

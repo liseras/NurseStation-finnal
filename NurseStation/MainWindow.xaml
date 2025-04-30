@@ -14,8 +14,10 @@
         </StackPanel>
         <StackPanel Margin="0,30">
             <StackPanel>
+                <!-- 
                 <Button Width="100" Height="50" Margin="860,0,0,0" Content="系统配置" Background="Blue" Foreground="White" Click="settingButton_Click"/>
-            </StackPanel>
+                -->
+                </StackPanel>
             <TabControl Margin="0,60" Height="500">
                 <TabItem Header="病房信息" FontSize="20">
                     <Grid>
@@ -107,6 +109,7 @@
                                 <ComboBoxItem IsSelected="True">全部</ComboBoxItem>
                                 <ComboBoxItem>未接听</ComboBoxItem>
                                 <ComboBoxItem>已接听</ComboBoxItem>
+                                <ComboBoxItem>忙碌中</ComboBoxItem>
                             </ComboBox>
                             <Button Content="导出excel" Width="100" Height="40" Margin="50,0" Click="ExportExcel_Click"/>
                         </StackPanel >
